@@ -1,22 +1,23 @@
+//ToolTip
 $('.copy-step1-button').tooltip({
   trigger: 'click',
   placement: 'bottom'
 });
 
 function setTooltip(message) {
-  $('.copy-step1-button').tooltip('hide')
+  $('.copied').tooltip('hide')
     .attr('data-original-title', message)
     .tooltip('show');
 }
 
 function hideTooltip() {
   setTimeout(function() {
-    $('.copy-step1-button').tooltip('hide');
-  }, 1000);
+    $('.copied').tooltip('hide');
+  }, 5000);
 }
 
-
-var clipboard = new ClipboardJS('.copy-step1-button');
+// Clipboard
+var clipboard = new ClipboardJS('.copy-button');
 
 clipboard.on('success', function(e) {
   setTooltip('Copied!');

@@ -1,23 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-<style>
-.buttonpad {
- padding-bottom: 20px;
-}
-.px-button {
-  background-color: #FF5000;
-  border: none;
-  color: white;
-  padding: 10px 20px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 16px;
-  margin-botton: 10px;
-  cursor: pointer;
-}
-</style>
+<title>Guide: Introduction to Portworx</title>
+<link rel="stylesheet" href="stylesheet.css">
 </head>
 <body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
@@ -26,9 +11,13 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js"></script>
 <script src="copying.js"></script>
 
+<div class="copied">
+</div>
+
+<div class="mainbucket">
 <div class="buttonpad">
 	<h5>Inspect the Postgres Volume</h5>
-	<button class="copy-step1-button px-button" data-clipboard-action="copy" data-clipboard-target="#copystep1">Copy</button>
+	<button class="copy-button px-button" data-clipboard-action="copy" data-clipboard-target="#copystep1">Copy</button>
 </div>
 <div id="copystep1">
   <code>
@@ -42,8 +31,8 @@ kubectl exec -it $PX_POD -n kube-system -c portworx -- /opt/pwx/bin/pxctl volume
 
 
 <div class="buttonpad">
-        <h5>Enter the Pod</h5>
-        <button class="copy-step1-button px-button" data-clipboard-action="copy" data-clipboard-target="#copystep1">Copy</button>
+        <h5>Enter the postgres Pod shell</h5>
+        <button class="copy-button px-button" data-clipboard-action="copy" data-clipboard-target="#copystep2">Copy</button>
 </div>
 <div id="copystep2">
 <code>
@@ -55,30 +44,118 @@ kubectl exec -it $POD -- bash
 
 <div class="buttonpad">
         <h5>Simulate node failure</h5>
-        <button class="copy-step1-button px-button" data-clipboard-action="copy" data-clipboard-target="#copystep1">Copy</button>
+        <button class="copy-button px-button" data-clipboard-action="copy" data-clipboard-target="#copystep3">Copy</button>
 </div>
 <div id="copystep3">
 <code>
 # See where postgres is running
+</br>
 kubectl get po -l app=postgres -o wide
-</br>
+</br></br>
 # Get the postgres node name
+</br>
 NODE=`kubectl get pods -l app=postgres -o wide | grep -v NAME | awk '{print $7}'`
-</br>
+</br></br>
 # Cordon the node (apps are no longer allowed on this node)
+</br>
 kubectl cordon ${NODE}
-</br>
+</br></br>
 # Get the postgres pod node
+</br>
 POD=$(kubectl get pods -l app=postgres -o wide | grep -v NAME | awk '{print $1}') 
-</br>
+</br></br>
 # Delete the pod
-kubectl delete pod ${POD}
 </br>
+kubectl delete pod ${POD}
+</br></br>
 # See what node postgres is running on now that its been deleted
+</br>
 kubectl get po -l app=postgres -o wide
 </code>
 </div>
 
+<div class="buttonpad">
+        <h5>Run 'df -h' within Postgres Pod</h5>
+        <button class="copy-button px-button" data-clipboard-action="copy" data-clipboard-target="#copystep4">Copy</button>
+</div>
+<div id="copystep4">
+<code>
+kubectl get pvc
+</br>
+POD=$(kubectl get pods -l app=postgres -o wide | grep -v NAME | awk '{print $1}') 
+</br>
+kubectl exec $POD -- df -h
+</code>
+</div>
 
+<div class="buttonpad">
+        <h5>Create snapshot and view snapshot objects</h5>
+        <button class="copy-button px-button" data-clipboard-action="copy" data-clipboard-target="#copystep5">Copy</button>
+</div>
+<div id="copystep5">
+<code>
+kubectl create -f pg-snapshot.yaml
+</br>
+sleep 3
+</br>
+kubectl get volumesnapshot,volumesnapshotdatas
+
+</code>
+</div>
+
+<div class="buttonpad">
+        <h5>Force failure by dropping data table</h5>
+        <button class="copy-button px-button" data-clipboard-action="copy" data-clipboard-target="#copystep6">Copy</button>
+</div>
+<div id="copystep6">
+<code>
+POD=$(kubectl get pods -l app=postgres | grep Running | grep 1/1 | awk '{print $1}')
+</br>
+kubectl exec -it $POD -- bash 
+</br>
+psql -U $POSTGRES_USER 
+</br>
+\c postgres
+</br>
+drop table mywhales cascade;
+</code>
+</div>
+
+<div class="buttonpad">
+        <h5>Create a PVC from the snapshot</h5>
+        <button class="copy-button px-button" data-clipboard-action="copy" data-clipboard-target="#copystep7">Copy</button>
+</div>
+<div id="copystep7">
+<code>
+kubectl create -f pvc-from-snap.yaml
+</br>
+sleep 2
+</br>
+kubectl get pvc px-postgres-snap-clone
+</code>
+</div>
+
+<div class="buttonpad">
+        <h5>Restore Database</h5>
+        <button class="copy-button px-button" data-clipboard-action="copy" data-clipboard-target="#copystep8">Copy</button>
+</div>
+<div id="copystep8">
+<code>
+kubectl delete -f postgres-db.yaml
+</br>
+kubectl create -f postgres-db-restore.yaml
+</br>
+kubectl scale deployment.apps/k8s-counter-deployment --replicas=0
+</br>
+kubectl scale deployment.apps/k8s-counter-deployment --replicas=3
+</br>
+kubectl get po
+</br>
+</code>
+</div>
+</br>
+</br>
+</br>
+</div>
 </body>
 </html>
