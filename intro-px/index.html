@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+.buttonpad {
+ padding-bottom: 20px;
+}
+.px-button {
+  background-color: #FF5000;
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin-botton: 10px;
+  cursor: pointer;
+}
+</style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js"></script>
+<script src="copying.js"></script>
+
+<div class="buttonpad">
+	<h5>Inspect the Postgres Volume</h5>
+	<button class="copy-step1-button px-button" data-clipboard-action="copy" data-clipboard-target="#copystep1">Copy</button>
+</div>
+<div id="copystep1">
+  <code>
+VOL=`kubectl get pvc | grep postgres-data | awk '{print $3}'`
+</br>
+PX_POD=$(kubectl get pods -l name=portworx -n kube-system -o jsonpath='{.items[0].metadata.name}')
+</br>
+kubectl exec -it $PX_POD -n kube-system -c portworx -- /opt/pwx/bin/pxctl volume inspect ${VOL}
+  </code>
+</div>
+
+
+<div class="buttonpad">
+        <h5>Enter the Pod</h5>
+        <button class="copy-step1-button px-button" data-clipboard-action="copy" data-clipboard-target="#copystep1">Copy</button>
+</div>
+<div id="copystep2">
+<code>
+POD=`kubectl get pods -l app=postgres | grep Running | grep 1/1 | awk '{print $1}'`
+</br>
+kubectl exec -it $POD -- bash
+</code>
+</div>
+
+<div class="buttonpad">
+        <h5>Simulate node failure</h5>
+        <button class="copy-step1-button px-button" data-clipboard-action="copy" data-clipboard-target="#copystep1">Copy</button>
+</div>
+<div id="copystep3">
+<code>
+# See where postgres is running
+kubectl get po -l app=postgres -o wide
+</br>
+# Get the postgres node name
+NODE=`kubectl get pods -l app=postgres -o wide | grep -v NAME | awk '{print $7}'`
+</br>
+# Cordon the node (apps are no longer allowed on this node)
+kubectl cordon ${NODE}
+</br>
+# Get the postgres pod node
+POD=$(kubectl get pods -l app=postgres -o wide | grep -v NAME | awk '{print $1}') 
+</br>
+# Delete the pod
+kubectl delete pod ${POD}
+</br>
+# See what node postgres is running on now that its been deleted
+kubectl get po -l app=postgres -o wide
+</code>
+</div>
+
+
+</body>
+</html>
