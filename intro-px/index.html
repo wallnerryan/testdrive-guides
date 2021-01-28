@@ -18,6 +18,7 @@
 <div class="buttonpad">
 	<h5>Inspect the Postgres Volume</h5>
 	<button class="copy-button px-button" data-clipboard-action="copy" data-clipboard-target="#copystep1">Copy</button>
+  <p style="font-style: italic;">These commands get the ID of the volume then find a portworx node to issue the `pxctl` command to inspect the volumes. `pxctl` is the Portworx CLI. </p>
 </div>
 <div id="copystep1">
   <code>
@@ -25,26 +26,28 @@ VOL=`kubectl get pvc | grep postgres-data | awk '{print $3}'`
 </br>
 PX_POD=$(kubectl get pods -l name=portworx -n kube-system -o jsonpath='{.items[0].metadata.name}')
 </br>
-kubectl exec -it $PX_POD -n kube-system -c portworx -- /opt/pwx/bin/pxctl volume inspect ${VOL}
-  </code>
+kubectl exec -it $PX_POD -n kube-system -c portworx -- /opt/pwx/bin/pxctl volume inspect ${VOL}<br>
+</code>
 </div>
 
 
 <div class="buttonpad">
         <h5>Enter the postgres Pod shell</h5>
         <button class="copy-button px-button" data-clipboard-action="copy" data-clipboard-target="#copystep2">Copy</button>
+        <p style="font-style: italic;"> These commands get the ID of the Postgres database container and use it to open a shell within the container, this allows you to issue commands within the Postgres container.</p>
 </div>
 <div id="copystep2">
 <code>
 POD=`kubectl get pods -l app=postgres | grep Running | grep 1/1 | awk '{print $1}'`
 </br>
-kubectl exec -it $POD -- bash
+kubectl exec -it $POD -- bash<br>
 </code>
 </div>
 
 <div class="buttonpad">
         <h5>Simulate node failure</h5>
         <button class="copy-button px-button" data-clipboard-action="copy" data-clipboard-target="#copystep3">Copy</button>
+        <p style="font-style: italic;">These commands will automatically simulate a container being deleted and then moved from its original Kubernetes worker node to another. This will show that Portworx enables high-availability of data when that Postgres database starts on a new node and is able to use the same volume with the same data.</p>
 </div>
 <div id="copystep3">
 <code>
@@ -70,13 +73,14 @@ kubectl delete pod ${POD}
 </br></br>
 # See what node postgres is running on now that its been deleted
 </br>
-kubectl get po -l app=postgres -o wide
+kubectl get po -l app=postgres -o wide<br>
 </code>
 </div>
 
 <div class="buttonpad">
         <h5>Run 'df -h' within Postgres Pod</h5>
         <button class="copy-button px-button" data-clipboard-action="copy" data-clipboard-target="#copystep4">Copy</button>
+        <p style="font-style: italic;">These commands find the Postgres Pod ID and issues the `df -h` command within it to show the filsystem that the Portworx volumes is mounted to.</p>
 </div>
 <div id="copystep4">
 <code>
@@ -84,13 +88,14 @@ kubectl get pvc
 </br>
 POD=$(kubectl get pods -l app=postgres -o wide | grep -v NAME | awk '{print $1}') 
 </br>
-kubectl exec $POD -- df -h
+kubectl exec $POD -- df -h | grep pxd<br>
 </code>
 </div>
 
 <div class="buttonpad">
         <h5>Create snapshot and view snapshot objects</h5>
         <button class="copy-button px-button" data-clipboard-action="copy" data-clipboard-target="#copystep5">Copy</button>
+        <p style="font-style: italic;">These commands will create a volumes snapshot of the postgres volume currently is use, then list the volume snapshot information using the Kubernetes objects VolumeSnapshot and VolumeSnapshotDatas</p>
 </div>
 <div id="copystep5">
 <code>
@@ -98,14 +103,14 @@ kubectl create -f pg-snapshot.yaml
 </br>
 sleep 3
 </br>
-kubectl get volumesnapshot,volumesnapshotdatas
-
+kubectl get volumesnapshot,volumesnapshotdatas<br>
 </code>
 </div>
 
 <div class="buttonpad">
         <h5>Force failure by dropping data table</h5>
         <button class="copy-button px-button" data-clipboard-action="copy" data-clipboard-target="#copystep6">Copy</button>
+        <p style="font-style: italic;">These commands will execute a `DROP TABLE` command within the Postgres database to simulate data loss.</p>
 </div>
 <div id="copystep6">
 <code>
@@ -117,13 +122,14 @@ psql -U $POSTGRES_USER
 </br>
 \c postgres
 </br>
-drop table mywhales cascade;
+drop table mywhales cascade;<br>
 </code>
 </div>
 
 <div class="buttonpad">
         <h5>Create a PVC from the snapshot</h5>
         <button class="copy-button px-button" data-clipboard-action="copy" data-clipboard-target="#copystep7">Copy</button>
+        <p style="font-style: italic;">These commands will restore a Portworx snapshot to a new Portworx volume.</p>
 </div>
 <div id="copystep7">
 <code>
@@ -131,13 +137,14 @@ kubectl create -f pvc-from-snap.yaml
 </br>
 sleep 2
 </br>
-kubectl get pvc px-postgres-snap-clone
+kubectl get pvc px-postgres-snap-clone<br>
 </code>
 </div>
 
 <div class="buttonpad">
         <h5>Restore Database</h5>
         <button class="copy-button px-button" data-clipboard-action="copy" data-clipboard-target="#copystep8">Copy</button>
+        <p style="font-style: italic;">These commands will delete the existing Postgres database and use a snapshot to restore the data. We will also scale the web-front end down and then back up so it reconnects to our newly restored database.</p>
 </div>
 <div id="copystep8">
 <code>
@@ -149,7 +156,7 @@ kubectl scale deployment.apps/k8s-counter-deployment --replicas=0
 </br>
 kubectl scale deployment.apps/k8s-counter-deployment --replicas=3
 </br>
-kubectl get po
+kubectl get po<br>
 </br>
 </code>
 </div>
